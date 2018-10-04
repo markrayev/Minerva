@@ -1,0 +1,123 @@
+---
+title: "HintzmanReplication"
+author: "Mark Rayev"
+date: "October 3, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```
+#Storing data structure in one list (list of vectors, lists, matrices)
+list_append <- function (input, ...){
+input <- c(input, list(...))
+  return(input)
+}
+
+#Distort prototype
+#Input - Distorted matrix
+#Source - A, B, or C
+#Times - Low-level or High-level distortions
+
+distortion_function <- function (input, source, times) {
+
+  for(i in 1:times) {
+    #Choose where to change starting from 11 to 23
+      element <-sample(11:length(source),1)
+    #Distort  
+      input[element] <- source [element] * -1
+  }
+  #returning distort
+  return(input)
+}
+
+
+#Size of memory: 3, 6, or 9 AND number of distortions
+#source - A, B, or C
+#dest - list to store data for matrix
+#Iter - 3, 6, or 9 memory size
+#dist_num - low level (2) or high level (4)
+
+
+memorySize_function <- function (source, iter, dist_num) {
+
+  temp<-source
+  dest <- list()
+  
+  #Temp - distortation array
+  
+  for(i in 1:iter) { 
+        temp <-distortion_function(temp, source, dist_num)
+  #Temporary storage
+        dest <- list_append(dest,temp)
+  }
+  #List of distorted vectors
+  num_distortion_matrix <- matrix(unlist(dest), byrow=TRUE, nrow=length(dest) )
+
+}
+
+#Function to run A, B, or C
+#Source- A, B, or C
+#Dest_list - storage
+numDistortion_function <- function (source, dest_list) {
+  #CLEAN LIST after each distortion
+  
+  
+  #Creating matrix of lists of distorted vectors
+  #source - A, B, or C
+  
+  distortion_matrix <- memorySize_function (source, 3, 2)
+  
+  dest_list <- list_append(dest_list, distortion_matrix)
+  
+  
+  distortion_matrix <- memorySize_function (source, 6, 2)
+  
+  dest_list <- list_append(dest_list, distortion_matrix)
+  
+  
+  distortion_matrix <- memorySize_function (source, 9, 2)
+  
+  dest_list <- list_append(dest_list, distortion_matrix)
+  
+  
+  
+  distortion_matrix <- memorySize_function (source,  3, 4)
+  
+  dest_list <- list_append(dest_list, distortion_matrix)
+  
+  
+  distortion_matrix <- memorySize_function (source,  6, 4)
+  
+  dest_list <- list_append(dest_list, distortion_matrix)
+  
+  
+  distortion_matrix <- memorySize_function (source,  9, 4)
+  
+  dest_list <- list_append(dest_list, distortion_matrix)
+
+}
+
+
+mat_list <- list()
+
+
+A <- sample( c(1,-1), 23, replace=TRUE)
+
+mat_list <- numDistortion_function(A, mat_list)
+
+B <- sample( c(1,-1), 23, replace=TRUE)
+
+mat_list <- numDistortion_function(B, mat_list)
+
+C <- sample( c(1,-1), 23, replace=TRUE)
+
+mat_list <- numDistortion_function(C, mat_list)
+
+
+
+```
+
+

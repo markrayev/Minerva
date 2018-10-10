@@ -116,27 +116,76 @@ get_echo <- function(probe, mem) {
     return(summed_echo)
 }
 
-
-
-
-
 mat_list <- list()
 
+mat_list_B <- list()
+
+mat_list_C <- list()
 
 A <- sample( c(1,-1), 23, replace=TRUE)
 
 mat_list <- numDistortion_function(A, mat_list)
 
+mat_list_A <- list()
+mat_list_A <- numDistortion_function(A, mat_list_A)
+
 B <- sample( c(1,-1), 23, replace=TRUE)
 
 mat_list <- numDistortion_function(B, mat_list)
+
+
+mat_list_B <- list()
+mat_list_B <- numDistortion_function(B, mat_list_B)
 
 C <- sample( c(1,-1), 23, replace=TRUE)
 
 mat_list <- numDistortion_function(C, mat_list)
 
 
-echo <- get_echo(A, mat_list[[1]]) 
+mat_list_C <- list()
+mat_list_C <- numDistortion_function(C, mat_list_C)
+
+#Send category name with empty features 11-23
+desired_prob_A <-  c(A[1:10], rep(0,13))
+
+desired_echo_A <- get_echo(desired_prob_A, mat_list_A[[1]]) 
+
+#How similar is echo to prototype?
+pearson_cor <- cor(desired_echo_A[11:23], A[11:23])
+
+cos_cor <- cosine(desired_echo_A[11:23], A[11:23])
+
+
+library(ggplot2)
+
+#echo and probe representation
+activations <- c(A[11:23], desired_echo[11:23])
+cue <- rep(c("Original", "Echo"), each=13)
+neuron_unit <- rep(seq(1:13) ,2)
+dframe <- data.frame(cue, neuron_unit, activations)
+
+ggplot(data=dframe, aes(y=activations, x=neuron_unit))+
+  geom_bar(stat="identity", position = position_dodge(), fill = "gray") +
+  theme_classic(base_size = 12) +
+  ylab("Activation") +
+  xlab("Position") + 
+  facet_wrap(~cue)
+
+
+comb_list <- c(A,B,C)
+
+countA = 1
+countB = 1
+
+#Ambiguous Recall Problem (Empty Category)
+
+cat_probe_A <- c(rep(0, 10), A[11:23])
+cat_echo_A <- get_echo(cat_probe_A, mat_list_A[[3]])
+
+cat_pearson_cor <- cor(cat_echo_A[1:10], A[1:10])
+
+cat_cos_cor <- cosine(cat_echo_A[1:10], A[1:10])
+
 
 
 ```

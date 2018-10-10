@@ -9,8 +9,11 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```
+```{r}
 #Storing data structure in one list (list of vectors, lists, matrices)
+
+library (lsa)
+
 list_append <- function (input, ...){
 input <- c(input, list(...))
   return(input)
@@ -100,6 +103,22 @@ numDistortion_function <- function (source, dest_list) {
 
 }
 
+get_echo <- function(probe, mem) {
+    # compute similarities between probe and memories
+    sim_vals <- c()
+    for (m in 1:dim(mem)[1]) {
+        sim_vals[m] <- cosine(probe, mem[m, ])  
+    }
+    # Weight memories by similarity
+    weighted_memory <- mem * (sim_vals^3)  
+
+    summed_echo <- colSums(weighted_memory)
+    return(summed_echo)
+}
+
+
+
+
 
 mat_list <- list()
 
@@ -116,6 +135,8 @@ C <- sample( c(1,-1), 23, replace=TRUE)
 
 mat_list <- numDistortion_function(C, mat_list)
 
+
+echo <- get_echo(A, mat_list[[1]]) 
 
 
 ```

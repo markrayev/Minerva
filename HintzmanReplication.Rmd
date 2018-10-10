@@ -170,7 +170,7 @@ ggplot(data=dframe, aes(y=activations, x=neuron_unit))+
   ylab("Activation") +
   xlab("Position") + 
   facet_wrap(~cue)
-
+ 
 
 comb_list <- c(A,B,C)
 

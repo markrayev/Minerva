@@ -43,7 +43,7 @@ distortion_function <- function (input, source, times) {
 #Iter - 3, 6, or 9 memory size
 #dist_num - low level (2) or high level (4)
 
-
+ 
 memorySize_function <- function (source, iter, dist_num) {
 
   temp<-source

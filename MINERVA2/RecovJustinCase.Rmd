@@ -1,0 +1,33 @@
+---
+title: "RecovJustinCase"
+author: "Mark Rayev"
+date: "September 18, 2018"
+output: pdf
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+```{r cars}
+
+my_core <- cor(A, t(exemplars))
+
+
+echo2 <- cor(A, t(my_core) )
+
+for (m in 1:10) {
+    diff_num <- c()
+
+    for (b in 1:10) {
+      my_num <- A[m] * exemplars[4][1]
+    }
+}
+
+
+similarity <- 1/10 
+```
+

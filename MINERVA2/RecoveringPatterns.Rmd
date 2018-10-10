@@ -1,0 +1,85 @@
+---
+title: "RecoveringPatterns"
+author: "Mark Rayev"
+date: "September 17, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```
+library (lsa)
+
+pattern <- runif(100,-1,1)
+pattern[pattern <= 0] <- -1
+pattern[pattern > 0 ] <- 1
+
+pattern <- sample( c(1,-1), 100, replace=TRUE)
+
+
+A <- sample( c(1,-1), 10, replace=TRUE)
+B <- sample( c(1,-1), 10, replace=TRUE)
+
+df<-data.frame(A,B)
+
+examples <- A
+#examples[c(3,9,7)]<-0
+
+noise_vector <- c(0,1,0,1,0,1,0,1,0,1)
+A*noise_vector
+
+random_noise_vector <- sample( c(0,1), 10, replace=TRUE)
+random_noise_vector
+
+exemplar_matrix <- matrix(rep(A,10),ncol=10, byrow=TRUE)
+distortion_matrix <- matrix(sample( c(0,1), 100, replace=TRUE, prob=c(.1,.9)),
+                            ncol=10)
+
+exemplars <- exemplar_matrix*distortion_matrix
+
+exemplars[1:10]
+
+cor_table <- cor(t(exemplars))
+
+
+
+#Similarity, Activation, and Content
+get_echo <- function(probe, mem) {
+    # compute similarities between probe and memories
+    sim_vals <- c()
+    for (m in 1:dim(mem)[1]) {
+        sim_vals[m] <- cosine(probe, mem[m, ])  
+    }
+    # Weight memories by similarity
+    weighted_memory <- mem * (sim_vals^3)  
+
+    summed_echo <- colSums(weighted_memory)
+    return(summed_echo)
+}
+
+
+echo <- get_echo(A exemplars) 
+
+
+#echo <- get_echo(A, cor_table) 
+
+
+echo_desired_values <- echo/10
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+

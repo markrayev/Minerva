@@ -1,0 +1,79 @@
+---
+title: "RecoveringPatterns"
+author: "Mark Rayev"
+date: "September 17, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library (lsa)
+
+pattern <- runif(100,-1,1)
+pattern[pattern <= 0] <- -1
+pattern[pattern > 0 ] <- 1
+
+pattern <- sample( c(1,-1), 100, replace=TRUE)
+
+
+
+A <- sample( c(1,-1), 10, replace=TRUE)
+B <- sample( c(1,-1), 10, replace=TRUE)
+
+df<-data.frame(A,B)
+
+examples <- A
+#examples[c(3,9,7)]<-0
+
+noise_vector <- c(0,1,0,1,0,1,0,1,0,1)
+A*noise_vector
+
+random_noise_vector <- sample( c(0,1), 10, replace=TRUE)
+random_noise_vector
+
+exemplar_matrix <- matrix(rep(A,10),ncol=10, byrow=TRUE)
+distortion_matrix <- matrix(sample( c(0,1), 100, replace=TRUE, prob=c(.1,.9)),
+                            ncol=10)
+
+exemplars <- exemplar_matrix*distortion_matrix
+
+exemplars[1:10]
+
+#cor_table <- cor(t(exemplars))
+
+
+#Similarity, Activation, and Content
+get_echo <- function(probe, mem) {
+    # compute similarities between probe and memories
+    sim_vals <- c()
+    for (m in 1:dim(mem)[1]) {
+        sim_vals[m] <- cosine(probe, mem[m, ])  
+    }
+    # Weight memories by similarity
+    weighted_memory <- mem * (sim_vals^3)  
+
+    summed_echo <- colSums(weighted_memory)
+    return(summed_echo)
+}
+
+echo_examplar <- get_echo(A, exemplars) 
+
+echo_recon <- get_echo(echo_examplar, exemplars) 
+
+echo_desired_values <- echo_recon/10
+
+echo_test <- get_echo (echo_examplar, exemplar_matrix)/10
+```
+
+-Fedding echo into get_echo returns a vector almost identical to the echo (let this returned echo be called reconstructed echo)
+-The reconstructed echo has a pattern of values identical to that of the probe (in this case A)
+-The actual values are different, is this because the memory does not consist of A?
+<blockquote>
+  -Using memory consisting solely of A, results in reconstructed echo with all the same value, and each value is close to A.
+</blockquote>
+-Is it possible to get back the probe exactly, without inputting the exact probe as the value for the "probe" in get_echo 
+
+-Side note: how do I get an indentation, without increasing the size of the text?

@@ -141,7 +141,7 @@ C <- sample( c(1,-1), 23, replace=TRUE)
 
 mat_list <- numDistortion_function(C, mat_list)
 
-
+ 
 mat_list_C <- list()
 mat_list_C <- numDistortion_function(C, mat_list_C)
 

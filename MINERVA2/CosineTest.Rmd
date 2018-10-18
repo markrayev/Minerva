@@ -1,0 +1,153 @@
+---
+title: "CosineTest"
+author: "Mark Rayev"
+date: "October 17, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+```{r}
+
+library (lsa)
+
+list_append <- function (input, ...){
+input <- c(input, list(...))
+  return(input)
+}
+
+
+distortion_function <- function (input, source, times) {
+
+  for(i in 1:times) {
+    #Choose where to change starting from 21 to 100
+      element <-sample(21:length(source),1)
+    #Distort  
+      input[element] <- source [element] * -1
+  }
+
+    #returning distort
+  return(input)
+}
+
+
+memorySize_function <- function (source, iter, dist_num) {
+
+  temp<-source
+  dest <- list()
+  
+  #Temp - distortation array
+  
+  for(i in 1:iter) { 
+        temp <-distortion_function(temp, source, dist_num)
+  #Temporary storage
+        dest <- list_append(dest,temp)
+  }
+  
+  #List of distorted vectors
+  num_distortion_matrix <- matrix(unlist(dest), byrow=TRUE, nrow=length(dest) )
+}
+
+
+numDistortion_function <- function (source, dest_list) {
+
+    #CLEAN LIST after each distortion
+  #Creating matrix of lists of distorted vectors
+  #source - A, B, or C
+  dest_list <- list_append(dest_list,  
+                           memorySize_function (source, 100, 50))
+}
+
+get_echo <- function(probe, mem) {
+    # compute similarities between probe and memories
+    sim_vals <- c()
+    for (m in 1:dim(mem)[1]) {
+        sim_vals[m] <- cosine(probe, mem[m, ])  
+    }
+    # Weight memories by similarity
+    weighted_memory <- mem * (sim_vals^3)  
+
+    summed_echo <- colSums(weighted_memory)
+    return(summed_echo)
+}
+
+
+mat_list <- list()
+
+A <- sample( c(1,-1), 100, replace=TRUE)
+B <- sample( c(1,-1), 100, replace=TRUE)
+#Making Distortion Matrix with Learning Rate of 0.7
+mat_list_A <- numDistortion_function(A, mat_list)
+repl_matrix_A <- matrix(sample(c(0,1), 10000, replace =TRUE, prob=c(.3, .7)), ncol = 100)
+for (k in 1:100)
+{
+#Retain first 20 values of A (name of object)
+for(j in 1:20){
+    repl_matrix_A[k, j] <- 1
+  }
+}
+
+#Multiply Distortion Matrix by Learning matrix
+learned_matrix_A <- mat_list_A[[1]] * repl_matrix_A
+View (learned_matrix_A)
+
+mat_list_B <- numDistortion_function(B, mat_list)
+repl_matrix_B <- matrix(sample(c(0,1), 10000, replace =TRUE, prob=c(.3, .7)), ncol = 100)
+for (k in 1:100)
+{
+
+for(j in 1:20){
+    repl_matrix_B[k, j] <- 1
+  }
+}
+learned_matrix_B <- mat_list_B[[1]] * repl_matrix_B
+View (learned_matrix_B)
+
+
+#Get a matrix that has 50 rows A and 50 rows B
+comb_matrix <- matrix(ncol=100, nrow=100)
+
+for (k in 1:50)
+{
+
+for(j in 1:100){
+    comb_matrix[k, j] <- learned_matrix_A[k, j]
+  }
+}
+
+for (k in 51:100)
+{
+
+for(j in 1:100){
+    comb_matrix[k, j] <- learned_matrix_B[k-50, j]
+  }
+}
+
+desired_prob_A <-  learned_matrix_A[51,]
+desired_echo_A <- get_echo(desired_prob_A, comb_matrix) 
+
+#MINERVA
+cos_cor_minerva <- cosine(desired_echo_A, A)
+
+
+#Prototype Classifier
+cos_cor_prototype <- cosine(learned_matrix_A[51,], A)
+
+
+
+
+
+cos_cor <- cosine(desired_echo_A, B)
+
+
+
+
+
+
+```
+

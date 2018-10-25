@@ -1,7 +1,7 @@
 ---
-title: "CosineTest"
+title: "Tester"
 author: "Mark Rayev"
-date: "October 17, 2018"
+date: "October 24, 2018"
 output: html_document
 ---
 
@@ -21,7 +21,6 @@ input <- c(input, list(...))
   return(input)
 }
 
-
 distortion_function <- function (input, source, times) {
 
   for(i in 1:times) {
@@ -35,22 +34,6 @@ distortion_function <- function (input, source, times) {
   return(input)
 }
 
-
-#memorySize_function <- function (source, iter, dist_num) {
-#  temp<-source
-#  dest <- list()
-
-  #Temp - distortation array
-#  for(i in 1:iter) { 
-#     temp <-distortion_function(temp, source, dist_num)
-  #Temporary storage
-#     dest <- list_append(dest,temp)
-#  }
-  
-  #List of distorted vectors
-#  num_distortion_matrix <- matrix(unlist(dest), byrow=TRUE, nrow=length(dest) )
-#}
-
 memorySize_function <- function (source, iter, dist_num) {
   dest <- list()
 
@@ -63,16 +46,13 @@ memorySize_function <- function (source, iter, dist_num) {
   num_distortion_matrix <- matrix(unlist(dest), byrow=TRUE, nrow=length(dest) )
 }
 
-
-
-
 numDistortion_function <- function (source, dest_list) {
 
     #CLEAN LIST after each distortion
   #Creating matrix of lists of distorted vectors
   #source - A, B, or C
   dest_list <- list_append(dest_list,  
-                           memorySize_function (source, 100, 2))
+                           memorySize_function (source, 1000, 500))
 }
 
 get_echo <- function(probe, mem) {
@@ -91,12 +71,12 @@ get_echo <- function(probe, mem) {
 
 mat_list <- list()
 
-A <- sample( c(1,-1), 100, replace=TRUE)
-B <- sample( c(1,-1), 100, replace=TRUE)
+A <- sample( c(1,-1), 1000, replace=TRUE)
+B <- sample( c(1,-1), 1000, replace=TRUE)
 #Making Distortion Matrix with Learning Rate of 0.7
 mat_list_A <- numDistortion_function(A, mat_list)
-repl_matrix_A <- matrix(sample(c(0,1), 10000, replace =TRUE, prob=c(.3, .7)), ncol = 100)
-for (k in 1:100)
+repl_matrix_A <- matrix(sample(c(0,1), 1000000, replace =TRUE, prob=c(.3, .7)), ncol = 1000)
+for (k in 1:1000)
 {
 #Retain first 20 values of A (name of object)
   for(j in 1:20){
@@ -109,9 +89,9 @@ learned_matrix_A <- mat_list_A[[1]] * repl_matrix_A
 #View (learned_matrix_A)
 
 mat_list_B <- numDistortion_function(B, mat_list)
-repl_matrix_B <- matrix(sample(c(0,1), 10000, replace =TRUE, prob=c(.3, .7)), ncol = 100)
+repl_matrix_B <- matrix(sample(c(0,1), 1000000, replace =TRUE, prob=c(.3, .7)), ncol = 1000)
 
-for (k in 1:100)
+for (k in 1:1000)
 {
   for(j in 1:20){
       repl_matrix_B[k, j] <- 1
@@ -123,30 +103,30 @@ learned_matrix_B <- mat_list_B[[1]] * repl_matrix_B
 
 
 #Get a matrix that has 50 rows A and 50 rows B
-comb_matrix <- matrix(ncol=100, nrow=100)
+comb_matrix <- matrix(ncol=1000, nrow=1000)
 
-for (k in 1:50)
+for (k in 1:500)
 {
-  for(j in 1:100){
+  for(j in 1:1000){
       comb_matrix[k, j] <- learned_matrix_A[k, j]
     }
 }
 
-for (k in 51:100)
+for (k in 501:1000)
 {
-  for(j in 1:100){
-      comb_matrix[k, j] <- learned_matrix_B[k-50, j]
+  for(j in 1:1000){
+      comb_matrix[k, j] <- learned_matrix_B[k-500, j]
     }
 }
 
-desired_prob_A <-  learned_matrix_A[51,]
+desired_prob_A <-  learned_matrix_A[501,]
 desired_echo_A <- get_echo(desired_prob_A, comb_matrix) 
 
 #MINERVA
 cos_cor_minerva <- cosine(desired_echo_A, A)
 
 #Prototype Classifier
-cos_cor_prototype <- cosine(learned_matrix_A[51,], A)
+cos_cor_prototype <- cosine(learned_matrix_A[501,], A)
 
 #cos_cor <- cosine(desired_echo_A, B)
 
@@ -154,7 +134,7 @@ cos_cor_prototype <- cosine(learned_matrix_A[51,], A)
 cos_list_minerva <- list()
 cos_list_prototype <- list()
 
-for (k in 51:100)
+for (k in 501:510)
 {
   desired_prob_A <-  learned_matrix_A[k,]
   desired_echo_A <- get_echo(desired_prob_A, comb_matrix) 
@@ -168,7 +148,7 @@ for (k in 51:100)
 cos_list_minerva_b <- list()
 cos_list_prototype_b <- list()
 
-for (k in 51:100)
+for (k in 501:510)
 {
   desired_prob_B <-  learned_matrix_B[k,]
   desired_echo_B <- get_echo(desired_prob_B, comb_matrix) 
@@ -184,4 +164,5 @@ for (k in 51:100)
 
 
 ```
+
 

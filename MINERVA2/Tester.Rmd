@@ -134,7 +134,7 @@ cos_cor_prototype <- cosine(learned_matrix_A[501,], A)
 cos_list_minerva <- list()
 cos_list_prototype <- list()
 
-for (k in 501:510)
+for (k in 501:1000)
 {
   desired_prob_A <-  learned_matrix_A[k,]
   desired_echo_A <- get_echo(desired_prob_A, comb_matrix) 
@@ -148,7 +148,7 @@ for (k in 501:510)
 cos_list_minerva_b <- list()
 cos_list_prototype_b <- list()
 
-for (k in 501:510)
+for (k in 501:1000)
 {
   desired_prob_B <-  learned_matrix_B[k,]
   desired_echo_B <- get_echo(desired_prob_B, comb_matrix) 
@@ -157,6 +157,196 @@ for (k in 501:510)
   
   cos_list_prototype_b <- list_append(cos_list_prototype_b, cosine(learned_matrix_B[k,], B))
 }
+
+
+
+#________________________________________________________________________________
+
+
+desired_prob_A_Old <-  learned_matrix_A[1,]
+desired_echo_A_Old <- get_echo(desired_prob_A_Old, comb_matrix) 
+
+#MINERVA Old
+cos_cor_minerva_Old <- cosine(desired_echo_A_Old, A)
+
+
+#Prototype Classifier Old
+cos_cor_prototype_Old <- cosine(learned_matrix_A[1,], A)
+
+
+cos_list_minerva_Old <- list()
+cos_list_prototype_Old <- list()
+
+for (k in 1:500)
+{
+  desired_prob_A_Old <-  learned_matrix_A[k,]
+  desired_echo_A_Old <- get_echo(desired_prob_A_Old, comb_matrix) 
+
+  cos_list_minerva_Old <- list_append(cos_list_minerva_Old, cosine(desired_echo_A_Old, A))
+  
+  cos_list_prototype_Old <- list_append(cos_list_prototype_Old, cosine(learned_matrix_A[k,], A))
+}
+
+cos_list_minerva_b_Old <- list()
+cos_list_prototype_b_Old <- list()
+
+desired_prob_B_Old <-  learned_matrix_B[1,]
+desired_echo_B_Old <- get_echo(desired_prob_B_Old, comb_matrix) 
+
+#MINERVA Old
+cos_cor_minerva_Old_B <- cosine(desired_echo_B_Old, B)
+
+#Prototype Classifier Old
+cos_cor_prototype_Old_B <- cosine(learned_matrix_B[1,], B)
+
+
+for (k in 1:500)
+{
+  desired_prob_B_Old <-  learned_matrix_B[k,]
+  desired_echo_B_Old <- get_echo(desired_prob_B_Old, comb_matrix) 
+
+  cos_list_minerva_b_Old <- list_append(cos_list_minerva_b_Old, cosine(desired_echo_B_Old, B))
+  
+  cos_list_prototype_b_Old <- list_append(cos_list_prototype_b_Old, cosine(learned_matrix_B[k,], B))
+}
+
+library(dplyr)
+
+
+cos_list_minerva_comb <- append (cos_list_minerva_Old,cos_list_minerva)
+#View(cos_list_minerva_comb)
+
+cos_list_minerva_comb_B <- append (cos_list_minerva_b_Old,cos_list_minerva_b)
+#View(cos_list_minerva_comb_B)
+
+category <- rep(c("A","B"),each=500)
+
+old_new <- rep(c("OLD","NEW"),each=500)
+
+sim_A <- as.numeric(as.character(unlist(cos_list_minerva_comb)))
+sim_B <- as.numeric(as.character(unlist(cos_list_minerva_comb_B)))
+
+evaluation <- sim_A > sim_B
+evaluation  <- as.character(evaluation)
+
+evaluation[evaluation=="TRUE"]<-"A"
+evaluation[evaluation=="FALSE"]<-"B"
+
+correct <- category == evaluation
+correct_num <- as.numeric(correct)
+
+
+minerva_df <- data.frame(sim_A,
+                         sim_B,
+                         category,
+                         old_new,
+                         evaluation,
+                         correct,
+                         correct_num)
+
+#View(minerva_df)
+
+get_means <- minerva_df %>% 
+              group_by(old_new) %>% 
+              summarize(percent_correct = sum(correct_num)/length(correct_num))
+
+library(ggplot2)
+
+library('reshape2')
+#melted = melt(get_means, id.vars="percent_correct")
+
+#ggplot() + geom_line(data=melted, aes(x="percent_correct", y="value", group="variable"))
+
+
+mean_similarity <- as.numeric(unlist(get_means))
+item_type <- rep(c("OLD","NEW"),1)
+model_type <-rep(c("MINERVA"),each=2)
+
+plot_df <- data.frame(item_type,mean_similarity,model_type)
+
+ggplot(plot_df, aes(x=item_type, 
+                    y=mean_similarity, 
+                    group=model_type,
+                    color=model_type,
+                    fill=model_type)) +
+  geom_bar(stat="identity", position="dodge") +
+  theme_classic() +
+  xlab("Item Type")+
+  ylab("Mean Similarity")
+
+
+#________________________________________________________
+
+mean_similarity <- c(0.350, 0.494)
+item_type <- rep(c("OLD","NEW"),1)
+model_type <-rep(c("MINERVA"),each=2)
+
+plot_df <- data.frame(item_type,mean_similarity,model_type)
+
+ggplot(plot_df, aes(x=item_type, 
+                    y=mean_similarity, 
+                    group=model_type,
+                    color=model_type,
+                    fill=model_type)) +
+  geom_bar(stat="identity", position="dodge") +
+  theme_classic() +
+  xlab("Item Type")+
+  ylab("Mean Similarity")
+
+#________________________________________________________
+
+cos_list_prototype_comb <- append(cos_list_prototype_Old,cos_list_prototype)
+
+cos_list_prototype_comb_B <- append(cos_list_prototype_b_Old, cos_list_prototype_b)
+
+sim_A_prot <- as.numeric(as.character(unlist(cos_list_prototype_comb)))
+sim_B_prot <- as.numeric(as.character(unlist(cos_list_prototype_comb_B)))
+
+category_prot <- rep(c("A","B"),each=500)
+old_new_prot <- rep(c("OLD","NEW"),each=500)
+
+evaluation_prot <- sim_A_prot > sim_B_prot
+evaluation_prot  <- as.character(evaluation_prot)
+
+evaluation_prot[evaluation_prot=="TRUE"]<-"A"
+evaluation_prot[evaluation_prot=="FALSE"]<-"B"
+
+correct_prot <- category_prot == evaluation_prot
+correct_num_prot <- as.numeric(correct_prot)
+
+prot_df <- data.frame(sim_A_prot,
+                         sim_B_prot,
+                         category_prot,
+                         old_new_prot,
+                         evaluation_prot,
+                         correct_prot,
+                         correct_num_prot)
+
+#View(minerva_df)
+
+get_means_prot <- prot_df %>% 
+              group_by(old_new_prot) %>% 
+              summarize(percent_correct = sum(correct_num_prot)/length(correct_num_prot))
+
+
+mean_similarity <- c(0.494, 0.506)
+item_type <- rep(c("OLD","NEW"),1)
+model_type <-rep(c("Prototype"),each=2)
+
+plot_df <- data.frame(item_type,mean_similarity,model_type)
+
+ggplot(plot_df, aes(x=item_type, 
+                    y=mean_similarity, 
+                    group=model_type,
+                    color=model_type,
+                    fill=model_type)) +
+  geom_bar(stat="identity", position="dodge") +
+  theme_classic() +
+  xlab("Item Type")+
+  ylab("Mean Similarity")
+
+
+
 
 
 

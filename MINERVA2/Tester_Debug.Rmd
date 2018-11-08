@@ -1,0 +1,364 @@
+---
+title: "Tester"
+author: "Mark Rayev"
+date: "October 24, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+```{r}
+
+library (lsa)
+
+list_append <- function (input, ...){
+input <- c(input, list(...))
+  return(input)
+}
+
+
+iter_g = 100
+dist_num_g = 50
+
+
+distortion_function <- function (input, source, times) {
+
+  for(i in 1:times) {
+    #Choose where to change starting from 21 to 100
+      element <-sample(21:length(source),1)
+    #Distort  
+      input[element] <- source [element] * -1
+  }
+
+    #returning distort
+  return(input)
+}
+
+memorySize_function <- function (source, iter, dist_num) {
+  dest <- list()
+
+  for(i in 1:iter) { 
+    #Temporary storage
+     dest <- list_append(dest,distortion_function(source, source, dist_num))
+  }
+  
+  #List of distorted vectors
+  num_distortion_matrix <- matrix(unlist(dest), byrow=TRUE, nrow=length(dest) )
+}
+
+numDistortion_function <- function (source, dest_list) {
+
+    #CLEAN LIST after each distortion
+  #Creating matrix of lists of distorted vectors
+  #source - A, B, or C
+  dest_list <- list_append(dest_list,  
+                           memorySize_function (source, iter_g, dist_num_g))
+}
+
+get_echo <- function(probe, mem) {
+    # compute similarities between probe and memories
+    sim_vals <- c()
+    for (m in 1:dim(mem)[1]) {
+        sim_vals[m] <- cosine(probe, mem[m, ])  
+    }
+    # Weight memories by similarity
+    weighted_memory <- mem * (sim_vals^3)  
+
+    summed_echo <- colSums(weighted_memory)
+    return(summed_echo)
+}
+
+
+mat_list <- list()
+
+A <- sample( c(1,-1), 100, replace=TRUE)
+B <- sample( c(1,-1), 100, replace=TRUE)
+#Making Distortion Matrix with Learning Rate of 0.7
+mat_list_A <- numDistortion_function(A, mat_list)
+repl_matrix_A <- matrix(sample(c(0,1), iter_g * iter_g, replace =TRUE, prob=c(.3, .7)), ncol = iter_g)
+for (k in 1:iter_g)
+{
+#Retain first 20 values of A (name of object)
+  for(j in 1:20){
+      repl_matrix_A[k, j] <- 1
+    }
+}
+
+#Multiply Distortion Matrix by Learning matrix
+learned_matrix_A <- mat_list_A[[1]] * repl_matrix_A
+#View (learned_matrix_A)
+
+mat_list_B <- numDistortion_function(B, mat_list)
+repl_matrix_B <- matrix(sample(c(0,1), iter_g * iter_g, replace =TRUE, prob=c(.3, .7)), ncol = iter_g)
+
+for (k in 1:iter_g)
+{
+  for(j in 1:20){
+      repl_matrix_B[k, j] <- 1
+    }
+}
+
+learned_matrix_B <- mat_list_B[[1]] * repl_matrix_B
+#View (learned_matrix_B)
+
+
+#Get a matrix that has 50 rows A and 50 rows B
+comb_matrix <- matrix(ncol=iter_g, nrow=iter_g)
+
+for (k in 1:dist_num_g)
+{
+  for(j in 1:iter_g){
+      comb_matrix[k, j] <- learned_matrix_A[k, j]
+    }
+}
+
+for (k in (dist_num_g + 1) : iter_g)
+{
+  for(j in 1:iter_g){
+      comb_matrix[k, j] <- learned_matrix_B[k - dist_num_g, j]
+    }
+}
+
+desired_prob_A <-  learned_matrix_A[dist_num_g + 1,]
+desired_echo_A <- get_echo(desired_prob_A, comb_matrix) 
+
+#MINERVA
+cos_cor_minerva <- cosine(desired_echo_A, desired_prob_A)
+
+#Prototype Classifier
+cos_cor_prototype <- cosine(learned_matrix_A[dist_num_g + 1,], A)
+
+#cos_cor <- cosine(desired_echo_A, B)
+
+
+cos_list_minerva <- list()
+cos_list_prototype <- list()
+
+for (k in (dist_num_g + 1) :iter_g)
+{
+  desired_prob_A <-  learned_matrix_A[k,]
+  desired_echo_A <- get_echo(desired_prob_A, comb_matrix) 
+
+  cos_list_minerva <- list_append(cos_list_minerva, cosine(desired_echo_A, desired_prob_A))
+  
+  cos_list_prototype <- list_append(cos_list_prototype, cosine(learned_matrix_A[k,], A))
+}
+
+
+cos_list_minerva_b <- list()
+cos_list_prototype_b <- list()
+
+for (k in (dist_num_g + 1) : iter_g)
+{
+  desired_prob_B <-  learned_matrix_B[k,]
+  desired_echo_B <- get_echo(desired_prob_B, comb_matrix) 
+
+  cos_list_minerva_b <- list_append(cos_list_minerva_b, cosine(desired_echo_B, B))
+  
+  cos_list_prototype_b <- list_append(cos_list_prototype_b, cosine(learned_matrix_B[k,], B))
+}
+
+
+
+#________________________________________________________________________________
+
+
+desired_prob_A_Old <-  learned_matrix_A[1,]
+desired_echo_A_Old <- get_echo(desired_prob_A_Old, comb_matrix) 
+
+#MINERVA Old
+cos_cor_minerva_Old <- cosine(desired_echo_A_Old, desired_prob_A_Old)
+
+
+#Prototype Classifier Old
+cos_cor_prototype_Old <- cosine(learned_matrix_A[1,], A)
+
+
+cos_list_minerva_Old <- list()
+cos_list_prototype_Old <- list()
+
+for (k in 1:dist_num_g)
+{
+  desired_prob_A_Old <-  learned_matrix_A[k,]
+  desired_echo_A_Old <- get_echo(desired_prob_A_Old, comb_matrix) 
+
+  cos_list_minerva_Old <- list_append(cos_list_minerva_Old, cosine(desired_echo_A_Old, desired_prob_A_Old))
+  
+  cos_list_prototype_Old <- list_append(cos_list_prototype_Old, cosine(learned_matrix_A[k,], A))
+}
+
+cos_list_minerva_b_Old <- list()
+cos_list_prototype_b_Old <- list()
+
+desired_prob_B_Old <-  learned_matrix_B[1,]
+desired_echo_B_Old <- get_echo(desired_prob_B_Old, comb_matrix) 
+
+#MINERVA Old
+cos_cor_minerva_Old_B <- cosine(desired_echo_B_Old, desired_prob_B_Old)
+
+#Prototype Classifier Old
+cos_cor_prototype_Old_B <- cosine(learned_matrix_B[1,], B)
+
+
+for (k in 1:dist_num_g)
+{
+  desired_prob_B_Old <-  learned_matrix_B[k,]
+  desired_echo_B_Old <- get_echo(desired_prob_B_Old, comb_matrix) 
+
+  cos_list_minerva_b_Old <- list_append(cos_list_minerva_b_Old, cosine(desired_echo_B_Old, desired_prob_B_Old))
+  
+  cos_list_prototype_b_Old <- list_append(cos_list_prototype_b_Old, cosine(learned_matrix_B[k,], B))
+}
+
+library(dplyr)
+
+
+cos_list_minerva_comb <- append (cos_list_minerva_Old,cos_list_minerva)
+#View(cos_list_minerva_comb)
+
+cos_list_minerva_comb_B <- append (cos_list_minerva_b_Old,cos_list_minerva_b)
+#View(cos_list_minerva_comb_B)
+
+category <- rep(c("A","B"),each=dist_num_g)
+
+old_new <- rep(c("OLD","NEW"),each=dist_num_g)
+
+sim_A <- as.numeric(as.character(unlist(cos_list_minerva_comb)))
+sim_B <- as.numeric(as.character(unlist(cos_list_minerva_comb_B)))
+
+comb_simA_simB <- append(sim_A, sim_B)
+
+label_x <- rep(c("Old A", "New A", "Old B", "New B"), each = 50)
+
+plot_df <- data.frame(label_x, comb_simA_simB)
+
+evaluation <- sim_A > sim_B
+evaluation  <- as.character(evaluation)
+
+evaluation[evaluation=="TRUE"]<-"A"
+evaluation[evaluation=="FALSE"]<-"B"
+
+correct <- category == evaluation
+correct_num <- as.numeric(correct)
+
+
+minerva_df <- data.frame(sim_A,
+                         sim_B,
+                         category,
+                         old_new,
+                         evaluation,
+                         correct,
+                         correct_num)
+
+#View(minerva_df)
+
+get_means <- minerva_df %>% 
+              group_by(old_new) %>% 
+              summarize(percent_correct = sum(correct_num)/length(correct_num))
+
+library(ggplot2)
+
+library('reshape2')
+#melted = melt(get_means, id.vars="percent_correct")
+
+#ggplot() + geom_line(data=melted, aes(x="percent_correct", y="value", group="variable"))
+
+
+mean_similarity <- as.numeric(unlist(get_means))
+item_type <- rep(c("OLD","NEW"),1)
+model_type <-rep(c("MINERVA"),each=2)
+
+plot_df <- data.frame(item_type,mean_similarity,model_type)
+
+ggplot(plot_df, aes(x=item_type, 
+                    y=mean_similarity, 
+                    group=model_type,
+                    color=model_type,
+                    fill=model_type)) +
+  geom_bar(stat="identity", position="dodge") +
+  theme_classic() +
+  xlab("Item Type")+
+  ylab("Mean Similarity")
+
+
+#________________________________________________________
+
+mean_similarity <- c(0.350, 0.494)
+item_type <- rep(c("OLD","NEW"),1)
+model_type <-rep(c("MINERVA"),each=2)
+
+plot_df <- data.frame(item_type,mean_similarity,model_type)
+
+ggplot(plot_df, aes(x=item_type, 
+                    y=mean_similarity, 
+                    group=model_type,
+                    color=model_type,
+                    fill=model_type)) +
+  geom_bar(stat="identity", position="dodge") +
+  theme_classic() +
+  xlab("Item Type")+
+  ylab("Mean Similarity")
+
+#________________________________________________________
+
+cos_list_prototype_comb <- append(cos_list_prototype_Old,cos_list_prototype)
+
+cos_list_prototype_comb_B <- append(cos_list_prototype_b_Old, cos_list_prototype_b)
+
+sim_A_prot <- as.numeric(as.character(unlist(cos_list_prototype_comb)))
+sim_B_prot <- as.numeric(as.character(unlist(cos_list_prototype_comb_B)))
+
+category_prot <- rep(c("A","B"),each=dist_num_g)
+old_new_prot <- rep(c("OLD","NEW"),each=dist_num_g)
+
+evaluation_prot <- sim_A_prot > sim_B_prot
+evaluation_prot  <- as.character(evaluation_prot)
+
+evaluation_prot[evaluation_prot=="TRUE"]<-"A"
+evaluation_prot[evaluation_prot=="FALSE"]<-"B"
+
+correct_prot <- category_prot == evaluation_prot
+correct_num_prot <- as.numeric(correct_prot)
+
+prot_df <- data.frame(sim_A_prot,
+                         sim_B_prot,
+                         category_prot,
+                         old_new_prot,
+                         evaluation_prot,
+                         correct_prot,
+                         correct_num_prot)
+
+#View(minerva_df)
+
+get_means_prot <- prot_df %>% 
+              group_by(old_new_prot) %>% 
+              summarize(percent_correct = sum(correct_num_prot)/length(correct_num_prot))
+
+
+mean_similarity <- c(0.494, 0.506)
+item_type <- rep(c("OLD","NEW"),1)
+model_type <-rep(c("Prototype"),each=2)
+
+plot_df <- data.frame(item_type,mean_similarity,model_type)
+
+ggplot(plot_df, aes(x=item_type, 
+                    y=mean_similarity, 
+                    group=model_type,
+                    color=model_type,
+                    fill=model_type)) +
+  geom_bar(stat="identity", position="dodge") +
+  theme_classic() +
+  xlab("Item Type")+
+  ylab("Mean Similarity")
+
+
+
+
+```
+
+
